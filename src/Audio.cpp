@@ -3123,6 +3123,24 @@ void Audio::processWebStream() {
     if (m_f_webfile) {
       bytesDecoded = sendBytes(InBuff.getReadPtr(), maxFrameSize);
     }
+    else
+    { // not a webfile
+      if (m_controlCounter != 100 && (m_codec == CODEC_OGG || m_codec == CODEC_OGG_FLAC))
+      { // application/ogg
+        int res = read_OGG_Header(InBuff.getReadPtr(), InBuff.bufferFilled());
+        if (res >= 0)
+          bytesDecoded = res;
+        else
+        { // error, skip header
+          stopSong();
+          m_controlCounter = 100;
+        }
+      }
+      else
+      {
+        bytesDecoded = sendBytes(InBuff.getReadPtr(), maxFrameSize);
+      }
+    }
     if (bytesDecoded < 0) {      // no syncword found or decode error, try next chunk
       InBuff.bytesWasRead(200);  // try next chunk
       m_bytesNotDecoded += 200;
